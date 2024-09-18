@@ -1,0 +1,104 @@
+networks:
+  up:
+    driver: bridge
+
+services:
+#  Web server
+  nginx:
+    image: nginx
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    volumes:
+      - ./laravel:/var/www
+      - ./docker/nginx/backend.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/logs/backend/:/var/logs/nginx/
+    depends_on:
+      - php
+      - db
+    networks:
+      - up
+
+#  PHP
+  php:
+    build:
+      context: .
+      dockerfile: ./docker/php/backend.dockerfile
+    container_name: php
+    restart: unless-stopped
+    user: ${PHP_UID}:${PHP_GID}
+    volumes:
+      - ./laravel:/var/www
+    ports:
+#      - "9000:9000"
+      - "8080:8080" #reverb port
+    depends_on:
+      - db
+    networks:
+      - up
+
+#  MySQL
+  db:
+    image: mysql:latest
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SERVICE_TAG: dev
+      SERVICE_NAME: mysql
+    networks:
+      - up
+
+#  PHP my admin for database
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - php
+      - db
+    ports:
+      - "8081:80"
+    links:
+      - db:db
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+    networks:
+      - up
+
+#  Email server/intercepter
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    volumes:
+      - ./docker/mailpit:/maildir
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - up
+
+  # Redis Server for Cache
+#  redis-cache:
+#    image: redis:latest
+#    container_name: redis
+#    volumes:
+#      - ./docker/cache:/data
+#    ports:
+#      - "6379:6379"
+#    restart: always
+#    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD}"
+#    networks:
+#      - up
