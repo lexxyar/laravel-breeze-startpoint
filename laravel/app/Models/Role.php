@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasPermissions;
 
 class Role extends \Spatie\Permission\Models\Role
 {
-    use HasFactory, HasPermissions;
+    use HasFactory, HasPermissions, HasUuids;
 
     /**
      * The attributes that are mass assignable.
