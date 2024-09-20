@@ -7,6 +7,8 @@ use App\Events\UserDeletedEvent;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -16,11 +18,11 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
         $data = User::query()->paginate()->withQueryString();
 
-        return response()->json($data);
+        return JsonResource::collection($data);
     }
 
     public function show(string $id): JsonResponse
@@ -59,14 +61,14 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class.','.$id],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class . ',' . $id],
             'roles' => ['array', 'sometimes']
         ]);
 
         $obj = User::query()->findOrFail($id);
         $obj->name = $request->name;
-            $obj->email = $request->email;
-            $obj->save();
+        $obj->email = $request->email;
+        $obj->save();
         if (isset($request->roles)) {
             $obj->roles()->sync($request->roles);
             $obj->load('roles');

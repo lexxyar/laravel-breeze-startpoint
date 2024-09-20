@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 class RoleController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return response()->json(Role::query()->paginate());
+        $data = Role::query()->paginate()->withQueryString();
+
+        return JsonResource::collection($data);
     }
 
     public function store(Request $request): \Illuminate\Http\JsonResponse
